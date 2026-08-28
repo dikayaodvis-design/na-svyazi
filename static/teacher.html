@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>На связи — кабинет педагога</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f4f7ff;
+  color:#1f2a44;
+}
+
+header{
+  background:linear-gradient(135deg,#6757ef,#8a75ff);
+  color:white;
+  padding:30px;
+}
+
+header h1{
+  margin:0 0 8px;
+}
+
+.wrap{
+  max-width:1250px;
+  margin:auto;
+  padding:25px;
+}
+
+.card{
+  background:white;
+  border-radius:20px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 8px 25px rgba(40,50,100,.08);
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.stat{
+  background:#f5f6ff;
+  border-radius:16px;
+  padding:16px;
+}
+
+.stat span{
+  color:#68738d;
+  font-size:13px;
+}
+
+.stat b{
+  display:block;
+  font-size:26px;
+  margin-top:5px;
+}
+
+button{
+  border:0;
+  border-radius:12px;
+  padding:11px 16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.refresh{
+  background:#6757ef;
+  color:white;
+}
+
+.export{
+  background:#e9edff;
+  color:#38446d;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+
+th{
+  background:#f1f3ff;
+  padding:11px;
+  text-align:left;
+  font-size:13px;
+}
+
+td{
+  padding:11px;
+  border-bottom:1px solid #edf0f7;
+  font-size:14px;
+}
+
+.good{
+  background:#eaf8ef;
+  border-radius:8px;
+  padding:5px 8px;
+  display:inline-block;
+}
+
+.mid{
+  background:#fff5d9;
+  border-radius:8px;
+  padding:5px 8px;
+  display:inline-block;
+}
+
+.attention{
+  background:#ffe9e9;
+  border-radius:8px;
+  padding:5px 8px;
+  display:inline-block;
+}
+
+.note{
+  color:#6d7690;
+  line-height:1.5;
+  font-size:14px;
+}
+
+.error{
+  padding:15px;
+  background:#ffecec;
+  border-radius:12px;
+  color:#8a3434;
+}
+
+@media(max-width:800px){
+  .stats{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>💬 «На связи»</h1>
+    <div>Кабинет педагога • результаты игровой истории</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="card">
+
+  <h2>Сводка класса</h2>
+
+  <div class="stats">
+
+    <div class="stat">
+      <span>Прошли игру</span>
+      <b id="count">—</b>
+    </div>
+
+    <div class="stat">
+      <span>Средняя эмпатия</span>
+      <b id="avgEmpathy">—</b>
+    </div>
+
+    <div class="stat">
+      <span>Средняя безопасность</span>
+      <b id="avgSafety">—</b>
+    </div>
+
+    <div class="stat">
+      <span>Нужно обсудить</span>
+      <b id="attentionCount">—</b>
+    </div>
+
+  </div>
+
+</div>
+
+
+<div class="card">
+
+  <div class="actions">
+
+    <button class="refresh" onclick="loadResults()">
+      🔄 Обновить результаты
+    </button>
+
+    <button class="export" onclick="exportCSV()">
+      📥 Скачать таблицу CSV
+    </button>
+
+  </div>
+
+  <div id="status"></div>
+
+  <div class="table-wrap">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>Имя</th>
+          <th>Герой</th>
+          <th>❤️ Эмпатия</th>
+          <th>🤝 Поддержка</th>
+          <th>🛑 Устойчивость</th>
+          <th>🛡️ Безопасность</th>
+          <th>🗣️ Просит помощь</th>
+          <th>🧭 Границы</th>
+          <th>Наблюдение</th>
+        </tr>
+      </thead>
+
+      <tbody id="rows"></tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+
+<div class="card">
+
+<h2>Как читать результаты</h2>
+
+<p class="note">
+Эта игра не является психологической диагностикой и не определяет
+характер ребёнка. Результаты показывают только то, какие варианты
+действий ребёнок выбирал в предложенных игровых ситуациях.
+</p>
+
+<p class="note">
+Если у ребёнка несколько показателей ниже остальных, это не означает,
+что он «агрессивный» или «плохой». Это повод спокойно обсудить с ним,
+как можно реагировать на насмешки, давление, исключение из группы,
+просьбы унизить другого ребёнка или опасные предложения в интернете.
+</p>
+
+</div>
+
+</div>
+
+
+<script>
+
+let allResults=[];
+
+
+function valueClass(v){
+
+  if(v>=70) return "good";
+
+  if(v>=40) return "mid";
+
+  return "attention";
+}
+
+
+function valueHTML(v){
+
+  const n=Number(v || 0);
+
+  return `<span class="${valueClass(n)}">${n}%</span>`;
+}
+
+
+function observation(p){
+
+  const values=[
+    Number(p.empathy || 0),
+    Number(p.support || 0),
+    Number(p.resistance || 0),
+    Number(p.safety || 0),
+    Number(p.help || 0),
+    Number(p.boundaries || 0)
+  ];
+
+  const low=values.filter(v=>v<40).length;
+
+  if(low>=3)
+    return `<span class="attention">Стоит обсудить</span>`;
+
+  if(low>=1)
+    return `<span class="mid">Есть тема для разговора</span>`;
+
+  return `<span class="good">Уверенные стратегии</span>`;
+}
+
+
+async function loadResults(){
+
+  const status=document.getElementById("status");
+
+  status.innerHTML="<p>Загружаю результаты…</p>";
+
+  try{
+
+    const response=await fetch("/api/results");
+
+    if(!response.ok)
+      throw new Error("Ошибка сервера");
+
+    const data=await response.json();
+
+    allResults=Array.isArray(data) ? data : data.results || [];
+
+    render();
+
+    status.innerHTML="";
+
+  }catch(e){
+
+    status.innerHTML=
+      `<div class="error">
+      Не удалось получить результаты.
+      Убедитесь, что сервер приложения запущен.
+      </div>`;
+  }
+}
+
+
+function render(){
+
+  const rows=document.getElementById("rows");
+
+  rows.innerHTML="";
+
+  let empathy=0;
+  let safety=0;
+  let attention=0;
+
+
+  allResults.forEach(r=>{
+
+    const p=r.profile || {};
+
+    empathy+=Number(p.empathy || 0);
+    safety+=Number(p.safety || 0);
+
+    const values=[
+      p.empathy,
+      p.support,
+      p.resistance,
+      p.safety,
+      p.help,
+      p.boundaries
+    ].map(x=>Number(x || 0));
+
+    if(values.filter(v=>v<40).length>=3)
+      attention++;
+
+
+    const tr=document.createElement("tr");
+
+    const character=
+      r.character==="boy" ? "👦" : "👧";
+
+
+    tr.innerHTML=`
+      <td><b>${escapeHTML(r.student_name || "")}</b></td>
+
+      <td>${character}</td>
+
+      <td>${valueHTML(p.empathy)}</td>
+
+      <td>${valueHTML(p.support)}</td>
+
+      <td>${valueHTML(p.resistance)}</td>
+
+      <td>${valueHTML(p.safety)}</td>
+
+      <td>${valueHTML(p.help)}</td>
+
+      <td>${valueHTML(p.boundaries)}</td>
+
+      <td>${observation(p)}</td>
+    `;
+
+    rows.appendChild(tr);
+  });
+
+
+  const n=allResults.length;
+
+  document.getElementById("count").textContent=n;
+
+  document.getElementById("avgEmpathy").textContent=
+    n ? Math.round(empathy/n)+"%" : "—";
+
+  document.getElementById("avgSafety").textContent=
+    n ? Math.round(safety/n)+"%" : "—";
+
+  document.getElementById("attentionCount").textContent=
+    attention;
+}
+
+
+function escapeHTML(text){
+
+  const div=document.createElement("div");
+
+  div.textContent=text;
+
+  return div.innerHTML;
+}
+
+
+function exportCSV(){
+
+  if(!allResults.length){
+
+    alert("Пока нет результатов для скачивания.");
+
+    return;
+  }
+
+
+  const rows=[[
+    "Имя",
+    "Герой",
+    "Эмпатия",
+    "Поддержка",
+    "Устойчивость",
+    "Безопасность",
+    "Обращение за помощью",
+    "Личные границы"
+  ]];
+
+
+  allResults.forEach(r=>{
+
+    const p=r.profile || {};
+
+    rows.push([
+      r.student_name || "",
+      r.character==="boy" ? "Мальчик" : "Девочка",
+      p.empathy || 0,
+      p.support || 0,
+      p.resistance || 0,
+      p.safety || 0,
+      p.help || 0,
+      p.boundaries || 0
+    ]);
+  });
+
+
+  const csv=
+    "\uFEFF"+
+    rows
+      .map(row=>
+        row.map(v=>
+          `"${String(v).replaceAll('"','""')}"`
+        ).join(";")
+      )
+      .join("\n");
+
+
+  const blob=
+    new Blob(
+      [csv],
+      {type:"text/csv;charset=utf-8;"}
+    );
+
+
+  const url=
+    URL.createObjectURL(blob);
+
+
+  const a=
+    document.createElement("a");
+
+  a.href=url;
+
+  a.download="na_svyazi_results.csv";
+
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+
+loadResults();
+
+</script>
+
+</body>
+</html>
