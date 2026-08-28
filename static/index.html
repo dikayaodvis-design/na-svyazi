@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>На связи — игра о цифровом общении</title>
+
+  <style>
+    :root {
+      --bg: #f4f7ff;
+      --card: #ffffff;
+      --ink: #1f2a44;
+      --muted: #68738d;
+      --accent: #6d5dfc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #eef4ff, #fff5fb);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: auto;
+      padding: 24px 16px 60px;
+    }
+
+    .logo {
+      font-weight: 900;
+      font-size: 30px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 8px 0 22px;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 12px 35px rgba(56,65,110,.12);
+      margin: 14px 0;
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    .input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #d9def0;
+      border-radius: 14px;
+      font-size: 18px;
+    }
+
+    .chars {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .char {
+      padding: 18px;
+      border: 2px solid transparent;
+      border-radius: 18px;
+      background: #f7f8ff;
+      cursor: pointer;
+      text-align: center;
+      font-size: 42px;
+    }
+
+    .char span {
+      display: block;
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    .char.selected {
+      border-color: var(--accent);
+      background: #efedff;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+      width: 100%;
+      margin-top: 14px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .phone {
+      background: #1d2235;
+      border-radius: 34px;
+      padding: 10px;
+      box-shadow: 0 18px 40px rgba(20,25,50,.25);
+    }
+
+    .screen {
+      background: #f6f8fc;
+      border-radius: 26px;
+      overflow: hidden;
+    }
+
+    .topbar {
+      padding: 14px 16px;
+      background: white;
+      border-bottom: 1px solid #e8eaf2;
+      font-weight: 800;
+    }
+
+    .chat {
+      padding: 16px;
+      min-height: 260px;
+    }
+
+    .msg {
+      max-width: 86%;
+      padding: 10px 12px;
+      margin: 8px 0;
+      border-radius: 16px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(20,30,60,.06);
+    }
+
+    .msg b {
+      display: block;
+      font-size: 12px;
+      color: #6b7590;
+      margin-bottom: 4px;
+    }
+
+    .system {
+      background: #ecefff;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+      max-width: 92%;
+    }
+
+    .answers {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .ans {
+      background: white;
+      border: 1px solid #dfe3ef;
+      text-align: left;
+    }
+
+    .ans.selected {
+      outline: 3px solid #a89fff;
+      background: #f2f0ff;
+    }
+
+    .progress {
+      height: 8px;
+      background: #e5e8f4;
+      border-radius: 99px;
+      overflow: hidden;
+      margin: 10px 0 18px;
+    }
+
+    .bar {
+      height: 100%;
+      background: var(--accent);
+      width: 0;
+    }
+
+    .pill {
+      display: inline-block;
+      background: #eef1ff;
+      border-radius: 99px;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: #555f7a;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2,1fr);
+      gap: 10px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 16px;
+      background: #f7f8ff;
+    }
+
+    .metric b {
+      font-size: 22px;
+      display: block;
+      margin-top: 5px;
+    }
+
+    .note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    @media(max-width:520px) {
+      .wrap {
+        padding: 16px 10px 40px;
+      }
+
+      .card {
+        padding: 16px;
+        border-radius: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <div class="logo">💬 На связи</div>
+
+  <div class="sub">
+    Интерактивная история о том, как вести себя
+    в сложных ситуациях общения в интернете.
+  </div>
+
+  <section id="start" class="card">
+
+    <h1>Начнём?</h1>
+
+    <p>
+      Введи своё имя. После прохождения игры результат
+      сохранится в общей таблице педагога.
+    </p>
+
+    <input
+      id="name"
+      class="input"
+      maxlength="80"
+      placeholder="Например, Аня"
+    >
+
+    <p><b>Выбери героя:</b></p>
+
+    <div class="chars">
+
+      <div class="char selected" data-char="girl">
+        👧
+        <span>Девочка</span>
+      </div>
+
+      <div class="char" data-char="boy">
+        👦
+        <span>Мальчик</span>
+      </div>
+
+    </div>
+
+    <button class="primary" id="begin">
+      Начать историю
+    </button>
+
+    <p class="note">
+      Это учебная игра, а не психологический тест.
+      Она показывает только выбранные способы поведения
+      в игровых ситуациях.
+    </p>
+
+  </section>
+
+
+  <section id="game" class="hidden">
+
+    <div class="pill" id="stepLabel"></div>
+
+    <div class="progress">
+      <div id="bar" class="bar"></div>
+    </div>
+
+    <div class="card">
+
+      <h2 id="qTitle"></h2>
+
+      <div class="phone">
+
+        <div class="screen">
+
+          <div class="topbar">
+            💬 4Б — наши 😎
+          </div>
+
+          <div id="chat" class="chat"></div>
+
+        </div>
+
+      </div>
+
+      <div id="answers" class="answers"></div>
+
+      <button class="primary" id="next">
+        Продолжить
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <section id="finish" class="card hidden">
+
+    <h1>🛡️ Твой цифровой щит</h1>
+
+    <p>
+      История закончена!
+    </p>
+
+    <p>
+      Результат не говорит, что человек «хороший»,
+      «плохой» или «агрессивный». Он показывает,
+      какие действия ты выбирал именно в этой игре.
+    </p>
+
+    <div id="resultGrid" class="result-grid"></div>
+
+    <p class="note">
+      Общая сводка результатов доступна педагогу.
+    </p>
+
+  </section>
+
+</div>
+
+
+<script>
+
+let questions = [];
+let idx = 0;
+let selectedChar = "girl";
+let answers = {};
+
+document.querySelectorAll(".char").forEach(el => {
+
+  el.onclick = () => {
+
+    document.querySelectorAll(".char")
+      .forEach(x => x.classList.remove("selected"));
+
+    el.classList.add("selected");
+
+    selectedChar = el.dataset.char;
+  };
+
+});
+
+
+document.getElementById("begin").onclick = async () => {
+
+  const name =
+    document.getElementById("name").value.trim();
+
+  if (!name) {
+    alert("Сначала введи своё имя.");
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch("/api/questions");
+
+    if (!response.ok) {
+      throw new Error();
+    }
+
+    questions = await response.json();
+
+    document.getElementById("start")
+      .classList.add("hidden");
+
+    document.getElementById("game")
+      .classList.remove("hidden");
+
+    render();
+
+  } catch (error) {
+
+    alert(
+      "Игра пока не смогла подключиться к серверу. " +
+      "Проверьте, что приложение опубликовано."
+    );
+
+  }
+
+};
+
+
+function render() {
+
+  const q = questions[idx];
+
+  const name =
+    document.getElementById("name").value.trim();
+
+  document.getElementById("stepLabel").textContent =
+    `Ситуация ${idx + 1} из ${questions.length}`;
+
+  document.getElementById("bar").style.width =
+    `${((idx + 1) / questions.length) * 100}%`;
+
+  document.getElementById("qTitle").textContent =
+    q.title;
+
+  const chat =
+    document.getElementById("chat");
+
+  chat.innerHTML = "";
+
+  q.messages.forEach(m => {
+
+    const d =
+      document.createElement("div");
+
+    d.className =
+      "msg" +
+      (m.from === "Система" ? " system" : "");
+
+    const text =
+      m.text.replaceAll("{name}", name);
+
+    const author =
+      document.createElement("b");
+
+    author.textContent = m.from;
+
+    d.appendChild(author);
+
+    d.appendChild(
+      document.createTextNode(text)
+    );
+
+    chat.appendChild(d);
+
+  });
+
+
+  const box =
+    document.getElementById("answers");
+
+  box.innerHTML = "";
+
+  const prior =
+    answers[String(q.id)] || [];
+
+
+  q.answers.forEach(a => {
+
+    const b =
+      document.createElement("button");
+
+    b.className =
+      "ans" +
+      (prior.includes(a.id) ? " selected" : "");
+
+    b.textContent = a.text;
+
+
+    b.onclick = () => {
+
+      if (q.multi) {
+
+        let arr =
+          answers[String(q.id)] || [];
+
+        if (arr.includes(a.id)) {
+
+          arr =
+            arr.filter(x => x !== a.id);
+
+        } else {
+
+          arr.push(a.id);
+
+        }
+
+        answers[String(q.id)] = arr;
+
+        b.classList.toggle("selected");
+
+      } else {
+
+        answers[String(q.id)] = [a.id];
+
+        [...box.children].forEach(
+          x => x.classList.remove("selected")
+        );
+
+        b.classList.add("selected");
+
+      }
+
+    };
+
+    box.appendChild(b);
+
+  });
+
+}
+
+
+document.getElementById("next").onclick =
+async () => {
+
+  const q =
+    questions[idx];
+
+  const selected =
+    answers[String(q.id)] || [];
+
+  if (selected.length === 0) {
+
+    alert(
+      q.multi
+        ? "Выбери хотя бы одно действие."
+        : "Выбери вариант ответа."
+    );
+
+    return;
+  }
+
+
+  if (idx < questions.length - 1) {
+
+    idx++;
+
+    render();
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+    return;
+
+  }
+
+
+  const payload = {
+
+    student_name:
+      document.getElementById("name")
+        .value.trim(),
+
+    character:
+      selectedChar,
+
+    answers:
+      answers
+
+  };
+
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/submit",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(payload)
+        }
+      );
+
+
+    if (!response.ok) {
+      throw new Error();
+    }
+
+
+    const data =
+      await response.json();
+
+
+    document.getElementById("game")
+      .classList.add("hidden");
+
+    document.getElementById("finish")
+      .classList.remove("hidden");
+
+
+    const labels = {
+
+      empathy:
+        "❤️ Эмпатия",
+
+      support:
+        "🤝 Поддержка",
+
+      resistance:
+        "🛑 Устойчивость",
+
+      safety:
+        "🛡️ Безопасность",
+
+      help:
+        "🗣️ Обращение за помощью",
+
+      boundaries:
+        "🧭 Личные границы"
+
+    };
+
+
+    const grid =
+      document.getElementById("resultGrid");
+
+    grid.innerHTML = "";
+
+
+    Object.entries(labels)
+      .forEach(([key, label]) => {
+
+        const d =
+          document.createElement("div");
+
+        d.className =
+          "metric";
+
+        d.innerHTML =
+          `<span>${label}</span>
+           <b>${data.profile[key]}%</b>`;
+
+        grid.appendChild(d);
+
+      });
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+
+  } catch (error) {
+
+    alert(
+      "Не удалось сохранить результат. " +
+      "Попробуйте ещё раз."
+    );
+
+  }
+
+};
+
+</script>
+
+</body>
+</html>
